@@ -40,13 +40,12 @@ jobs:
       - name: Copy environment file
         run: cp .env.example .env
 
-      - name: Override DB to SQLite for CI
+      - name: Set environment for CI
         run: |
+          KEY=$(php -r "echo 'base64:'.base64_encode(random_bytes(32));")
+          echo "APP_KEY=$KEY" >> .env
           echo "DB_CONNECTION=sqlite" >> .env
           echo "DB_DATABASE=:memory:" >> .env
-
-      - name: Generate app key
-        run: php artisan key:generate
 
       - name: Run migrations
         run: php artisan migrate --force
