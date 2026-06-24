@@ -54,8 +54,5 @@ jobs:
           LOG_CHANNEL=stack
           EOF
 
-      - name: Run migrations
-        run: php artisan migrate --force
-
       - name: Execute tests
         run: php artisan test
