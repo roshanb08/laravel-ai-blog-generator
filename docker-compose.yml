@@ -1,0 +1,68 @@
+services:
+  laravel-web:
+    build: .
+    container_name: laravel-ai-blog-web
+    ports:
+      - "80:8000"
+    env_file:
+      - .env
+    depends_on:
+      laravel-mysql:
+        condition: service_healthy
+      laravel-redis:
+        condition: service_healthy
+      laravel-api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  laravel-api:
+    image: ghcr.io/roshanb08/ai-blog-generator:1.1.0
+    container_name: laravel-ai-blog-generator
+    env_file:
+      - .env
+    volumes:
+      - laravel_ai_blog_data:/data
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  laravel-mysql:
+    image: mysql:8.0
+    container_name: laravel-ai-blog-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootsecret}
+      MYSQL_DATABASE: ${DB_DATABASE:-laravel}
+      MYSQL_USER: ${DB_USERNAME:-laravel}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+    ports:
+      - "3306:3306"
+    volumes:
+      - laravel_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-rootsecret}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  laravel-redis:
+    image: redis:7-alpine
+    container_name: laravel-ai-blog-redis
+    command: redis-server --appendonly yes
+    volumes:
+      - laravel_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  laravel_ai_blog_data:
+  laravel_mysql_data:
+  laravel_redis_data:
