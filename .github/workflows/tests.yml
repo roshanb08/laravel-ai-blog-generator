@@ -37,15 +37,22 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-interaction --no-progress
 
-      - name: Copy environment file
-        run: cp .env.example .env
-
-      - name: Set environment for CI
+      - name: Create CI environment file
         run: |
           KEY=$(php -r "echo 'base64:'.base64_encode(random_bytes(32));")
-          echo "APP_KEY=$KEY" >> .env
-          echo "DB_CONNECTION=sqlite" >> .env
-          echo "DB_DATABASE=:memory:" >> .env
+          cat > .env << EOF
+          APP_NAME=Blog
+          APP_ENV=testing
+          APP_KEY=${KEY}
+          APP_DEBUG=true
+          APP_URL=http://localhost
+          DB_CONNECTION=sqlite
+          DB_DATABASE=:memory:
+          CACHE_STORE=array
+          SESSION_DRIVER=array
+          QUEUE_CONNECTION=sync
+          LOG_CHANNEL=stack
+          EOF
 
       - name: Run migrations
         run: php artisan migrate --force
